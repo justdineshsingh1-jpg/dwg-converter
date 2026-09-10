@@ -29,7 +29,7 @@ async def convert_dxf(request: Request):
             
         try:
             # Execute LibreDWG's conversion tool
-            subprocess.run(["dxf2dwg", dxf_path, "-y", "-o", dwg_path], check=True)
+            subprocess.run(["/lib64/ld-linux-x86-64.so.2", "/usr/local/bin/dxf2dwg", dxf_path, "-y", "-o", dwg_path], check=True, capture_output=True, text=True)
             
             with open(dwg_path, "rb") as f:
                 dwg_data = f.read()
@@ -39,6 +39,8 @@ async def convert_dxf(request: Request):
                 media_type="application/acad", 
                 headers={"Content-Disposition": "attachment; filename=Survey_Detailed_Poles.dwg"}
             )
+        except subprocess.CalledProcessError as e:
+            return Response(content=f"Subprocess Error: {e.stderr}\nStdout: {e.stdout}", status_code=500)
         except Exception as e:
             return Response(content=f"Conversion Error: {str(e)}", status_code=500)
 @app.get('/test')
@@ -63,5 +65,14 @@ async def ldd_cmd():
     try:
         result = subprocess.run(['ldd', '/usr/local/bin/dxf2dwg'], capture_output=True, text=True)
         return {'out': result.stdout, 'err': result.stderr}
+    except Exception as e:
+        return {'error': str(e)}
+
+@app.get('/test_ld')
+async def test_ld():
+    import subprocess
+    try:
+        result = subprocess.run(['/lib64/ld-linux-x86-64.so.2', '/usr/local/bin/dxf2dwg', '--version'], capture_output=True, text=True)
+        return {'stdout': result.stdout, 'stderr': result.stderr}
     except Exception as e:
         return {'error': str(e)}
