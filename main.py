@@ -31,6 +31,8 @@ async def convert_dxf(request: Request):
             doc = ezdxf.read(StringIO(dxf_content.decode('utf-8', errors='ignore')))
             doc.saveas(dxf_path)
         except Exception as e:
+            with open("/tmp/last_error.txt", "w") as f: f.write(f"EZDXF Parse Error: {str(e)}")
+            with open("/tmp/last_failed.dxf", "wb") as f: f.write(dxf_content)
             return Response(content=f"EZDXF Parse Error: {str(e)}", status_code=500)
             
         try:
@@ -46,8 +48,12 @@ async def convert_dxf(request: Request):
                 headers={"Content-Disposition": "attachment; filename=Survey_Detailed_Poles.dwg"}
             )
         except subprocess.CalledProcessError as e:
+            with open("/tmp/last_error.txt", "w") as f: f.write(f"Subprocess Error: {e.stderr}\nStdout: {e.stdout}")
+            with open("/tmp/last_failed.dxf", "wb") as f: f.write(dxf_content)
             return Response(content=f"Subprocess Error: {e.stderr}\nStdout: {e.stdout}", status_code=500)
         except Exception as e:
+            with open("/tmp/last_error.txt", "w") as f: f.write(f"Conversion Error: {str(e)}")
+            with open("/tmp/last_failed.dxf", "wb") as f: f.write(dxf_content)
             return Response(content=f"Conversion Error: {str(e)}", status_code=500)
 @app.get('/test')
 async def test_cmd():
@@ -91,3 +97,15 @@ async def help_cmd():
         return {'out': result.stdout, 'err': result.stderr}
     except Exception as e:
         return {'err': str(e)}
+
+@app.get('/last_error')
+async def get_last_error():
+    import os
+    try:
+        with open('/tmp/last_error.txt', 'r') as f:
+            return f.read()
+    except: return 'No error'
+@app.get('/last_dxf')
+async def get_last_dxf():
+    from fastapi.responses import FileResponse
+    return FileResponse('/tmp/last_failed.dxf')
