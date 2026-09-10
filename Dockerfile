@@ -1,4 +1,4 @@
-FROM python:3.10-slim   
+FROM python:3.10-slim
 
 # Install system dependencies required to compile LibreDWG
 RUN apt-get update && apt-get install -y \
@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y \
     texinfo \
     && rm -rf /var/lib/apt/lists/*
 
-# Download, compile, and install LibreDWG
+# Download, compile, and install LibreDWG in Low-Memory mode
 RUN wget https://ftp.gnu.org/gnu/libredwg/libredwg-0.12.4.tar.gz \
     && tar -xvzf libredwg-0.12.4.tar.gz \
     && cd libredwg-0.12.4 \
-    && ./configure --disable-bindings\
+    && CFLAGS="-O0" CXXFLAGS="-O0" ./configure --disable-bindings --disable-shared \
     && make \
     && make install \
     && ldconfig \
