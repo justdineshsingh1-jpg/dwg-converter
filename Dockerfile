@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget https://ftp.gnu.org/gnu/libredwg/libredwg-0.12.4.tar.gz \
     && tar -xvzf libredwg-0.12.4.tar.gz \
     && cd libredwg-0.12.4 \
-    && ./configure \
+    && ./configure --disable-bindings\
     && make \
     && make install \
     && ldconfig \
