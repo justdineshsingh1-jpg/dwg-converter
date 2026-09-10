@@ -24,8 +24,14 @@ async def convert_dxf(request: Request):
         dxf_path = os.path.join(tmpdir, "input.dxf")
         dwg_path = os.path.join(tmpdir, "output.dwg")
         
-        with open(dxf_path, "wb") as f:
-            f.write(dxf_content)
+        try:
+            # Parse the minimal DXF to generate standard headers
+            import ezdxf
+            from io import StringIO
+            doc = ezdxf.read(StringIO(dxf_content.decode('utf-8', errors='ignore')))
+            doc.saveas(dxf_path)
+        except Exception as e:
+            return Response(content=f"EZDXF Parse Error: {str(e)}", status_code=500)
             
         try:
             # Execute LibreDWG's conversion tool
@@ -76,3 +82,12 @@ async def test_ld():
         return {'stdout': result.stdout, 'stderr': result.stderr}
     except Exception as e:
         return {'error': str(e)}
+
+@app.get('/help')
+async def help_cmd():
+    import subprocess
+    try:
+        result = subprocess.run(['/lib64/ld-linux-x86-64.so.2', '/usr/local/bin/dxf2dwg', '--help'], capture_output=True, text=True)
+        return {'out': result.stdout, 'err': result.stderr}
+    except Exception as e:
+        return {'err': str(e)}
