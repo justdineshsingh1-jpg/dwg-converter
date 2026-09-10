@@ -41,3 +41,27 @@ async def convert_dxf(request: Request):
             )
         except Exception as e:
             return Response(content=f"Conversion Error: {str(e)}", status_code=500)
+@app.get('/test')
+async def test_cmd():
+    import subprocess
+    try:
+        result = subprocess.run(['dxf2dwg', '--version'], capture_output=True, text=True)
+        return {'stdout': result.stdout, 'stderr': result.stderr}
+    except Exception as e:
+        return {'error': str(e)}
+@app.get('/find')
+async def find_cmd():
+    import subprocess
+    try:
+        result = subprocess.run(['ls', '-l', '/usr/local/bin/dxf2dwg'], capture_output=True, text=True)
+        return {'out': result.stdout, 'err': result.stderr}
+    except Exception as e:
+        return {'error': str(e)}
+@app.get('/ldd')
+async def ldd_cmd():
+    import subprocess
+    try:
+        result = subprocess.run(['ldd', '/usr/local/bin/dxf2dwg'], capture_output=True, text=True)
+        return {'out': result.stdout, 'err': result.stderr}
+    except Exception as e:
+        return {'error': str(e)}
