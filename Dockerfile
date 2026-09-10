@@ -1,12 +1,15 @@
 FROM python:3.10-slim
 
-# Install system libraries needed by the pre-compiled binary
-RUN apt-get update && apt-get install -y libpcre2-8-0 && rm -rf /var/lib/apt/lists/*
+# Install system libraries and patchelf
+RUN apt-get update && apt-get install -y libpcre2-8-0 patchelf && rm -rf /var/lib/apt/lists/*
 
-# Copy the pre-compiled binaries into the Linux system
 COPY dxf2dwg /usr/local/bin/dxf2dwg
 COPY libredwg.so.0 /usr/local/lib/libredwg.so.0
-RUN chmod +x /usr/local/bin/dxf2dwg && ldconfig
+
+# Patch the binary so it uses the standard Linux linker
+RUN chmod +x /usr/local/bin/dxf2dwg \
+    && patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 /usr/local/bin/dxf2dwg \
+    && ldconfig
 
 # Set up the Python API
 WORKDIR /app
