@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DWG Converter Frontend</title>
+    <style>
+        .action-btn {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            background-color: #007bff;
+        }
+        #dwg-btn {
+            background-color: #ff5722;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="cad-btn" class="action-btn" onclick="downloadDXF()">Download DXF</button>
+    <button id="dwg-btn" class="action-btn" onclick="downloadDWG()">Download DWG</button>
+
+    <script>
+        // Mock global data
+        var globalData = [1]; 
+
+        function downloadDXF() {
+            var dxfString = generateDXFString();
+            var blob = new Blob([dxfString], { type: "text/plain" });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "output.dxf";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function generateDXFString() {
+            var dxf = "0\nSECTION\n2\nHEADER\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nENDSEC\n0\nSECTION\n2\nBLOCKS\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n";
+            // Mock DXF generation logic
+            dxf += "  0\nENDSEC\n  0\nEOF\n";
+            return dxf;
+        }
+
+        window.downloadDWG = async function() {
+            if (globalData.length === 0) return alert("Please wait for data to load or add points first.");
+            
+            var btn = document.getElementById('dwg-btn');
+            var originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ Converting...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            try {
+                var dxfString = generateDXFString(); 
+
+                // Send the DXF string to your Cloud Microservice
+                // NOTE: Replace YOUR_RENDER_URL_HERE with your actual Render URL
+                var response = await fetch("https://YOUR_RENDER_URL_HERE.onrender.com/convert", {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: dxfString
+                });
+
+                if (!response.ok) throw new Error("Conversion failed on the server.");
+
+                var blob = await response.blob();
+                var link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "Survey_Detailed_Poles.dwg";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                alert("Error generating DWG: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

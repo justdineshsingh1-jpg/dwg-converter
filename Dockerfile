@@ -1,13 +1,12 @@
-# Stage 1: Grab a pre-compiled LibreDWG image from DockerHub
-FROM kuzoncby/libredwg:latest AS libredwg_builder
-
-# Stage 2: Build your actual Python API
 FROM python:3.10-slim
 
-# Copy the pre-compiled LibreDWG tools directly into this image!
-COPY --from=libredwg_builder /usr/local/bin/ /usr/local/bin/
-COPY --from=libredwg_builder /usr/local/lib/ /usr/local/lib/
-RUN ldconfig
+# Install system libraries needed by the pre-compiled binary
+RUN apt-get update && apt-get install -y libpcre2-8-0 && rm -rf /var/lib/apt/lists/*
+
+# Copy the pre-compiled binaries into the Linux system
+COPY dxf2dwg /usr/local/bin/dxf2dwg
+COPY libredwg.so.0 /usr/local/lib/libredwg.so.0
+RUN chmod +x /usr/local/bin/dxf2dwg && ldconfig
 
 # Set up the Python API
 WORKDIR /app
